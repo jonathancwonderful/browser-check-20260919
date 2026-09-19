@@ -1,0 +1,36 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>Browser Check</title><style>
+*{box-sizing:border-box}body{margin:0;background:#f1f5f9;color:#17243a;font:15px/1.45 system-ui,sans-serif}main{max-width:650px;margin:auto;padding:20px 16px}h1{font-size:25px;margin:0 0 6px}p{margin:7px 0 16px}.note{background:#fff3d6;padding:12px;border-radius:10px}.row{padding:10px 12px;margin:7px 0;background:white;border:1px solid #dce3eb;border-radius:9px}.row strong{display:block}.pass{border-left:5px solid #16803d}.fail{border-left:5px solid #bb263c}.wait{border-left:5px solid #d58b00}small{display:block;color:#506178;word-break:break-word}.badge{font-weight:700}button,a.button{display:inline-block;border:0;border-radius:8px;background:#173d77;color:white;padding:12px 15px;font:inherit;text-decoration:none}#ua{font-size:12px;word-break:break-word}iframe{width:100%;height:44px;border:1px solid #c7d7e9;border-radius:6px;background:white}#status{font-weight:700}#viewport{margin:8px 0}.box{position:absolute;left:-9999px;width:10px;height:100vh;height:100dvh}</style></head><body><main>
+<h1>Browser Check / 瀏覽器檢查</h1><p>Standalone test · 獨立測試頁 <small>Build ER-20260919-1</small></p>
+<p class="note">Keep this page open for 15 seconds, then take a screenshot.<br>請停留 15 秒，再截圖。結果只留在此頁；不會上傳定位、輸入或測試結果。</p>
+<p id="status">JavaScript has not started yet / JavaScript 尚未開始。若一直顯示這句，請直接截圖。</p>
+<div class="row pass"><strong>1 · HTML page / 基本頁面</strong>Visible / 已顯示</div>
+<div id="checks"><div class="row wait">2–7 · Waiting for JavaScript / 等待程式啟動</div></div>
+<noscript><p class="note">JavaScript is disabled / JavaScript 已停用。請截圖此訊息。</p></noscript>
+<div id="viewport"></div><div id="frame-slot"></div><p id="ua"></p><button id="copy" hidden>Copy results / 複製結果</button><p id="copy-status"></p>
+<a id="open" class="button" hidden target="_blank" rel="noopener noreferrer">Open EasyRide separately / 另開 EasyRide</a>
+<p><small>This page does not load Wonderful’s startup code. Passing these checks does not prove EasyRide works. 此頁不載入 Wonderful 平台程式；通過不代表 EasyRide 一定正常。</small></p>
+</main><script>
+(function(){
+ var rows={}, results={}, started=Date.now(), checks=document.getElementById('checks');checks.textContent='';
+ function set(id,title,state,detail){var row=rows[id];if(!row){row=document.createElement('div');rows[id]=row;checks.appendChild(row)}row.className='row '+state;row.textContent='';var b=document.createElement('strong');b.textContent=id+' · '+title;row.appendChild(b);var d=document.createElement('span');d.textContent=detail;row.appendChild(d);results[id]={test:title,state:state,detail:detail};}
+ function err(e){return e&&e.name?String(e.name):'Error'}
+ window.addEventListener('error',function(e){set('E','Script error / 程式錯誤','fail',err(e.error)+' · line '+(e.lineno||0));});
+ document.getElementById('status').textContent='Running / 檢查中…';set('2','JavaScript','pass','Started / 已啟動');
+ var caps=[['Array.at',typeof Array.prototype.at==='function'],['ResizeObserver',typeof ResizeObserver==='function'],['visualViewport',!!window.visualViewport],['crypto.randomUUID',!!(window.crypto&&window.crypto.randomUUID)]];
+ set('3','Browser features / 瀏覽器功能',caps.every(function(v){return v[1]})?'pass':'wait',caps.map(function(v){return v[0]+': '+(v[1]?'yes':'no')}).join(' | '));
+ var key='browser-check-'+Date.now();try{localStorage.setItem(key,'1');var ok=localStorage.getItem(key)==='1';localStorage.removeItem(key);set('4','Site storage / 網站儲存',ok?'pass':'fail',ok?'Available / 可用':'Read/write mismatch')}catch(e){set('4','Site storage / 網站儲存','wait',err(e)+' — unavailable on this test origin / 此測試網站無法使用')}
+ var box=document.createElement('div');box.className='box';document.body.appendChild(box);
+ function layout(){var v=window.visualViewport;var text='Window '+innerWidth+'×'+innerHeight+'; visible '+(v?Math.round(v.width)+'×'+Math.round(v.height):'n/a')+'; scale '+(v?v.scale:1)+'; CSS height '+Math.round(box.getBoundingClientRect().height);set('5','Viewport / 畫面尺寸',innerHeight>0&&(!v||v.height>0)?'pass':'fail',text)}layout();window.addEventListener('resize',layout);if(window.visualViewport)window.visualViewport.addEventListener('resize',layout);
+ set('6','Embedded document / 內嵌畫面','wait','Waiting / 等待中');var f=document.createElement('iframe');f.title='Embedded document test';f.srcdoc='<html><body style="margin:8px;background:#e1f5e8;color:#173f2a;font:14px sans-serif">Embedded content visible / 內嵌內容可見</body></html>';f.onload=function(){try{var r=f.getBoundingClientRect();var text=f.contentDocument.body.textContent;set('6','Embedded document / 內嵌畫面',r.height>0&&text.indexOf('Embedded content')>=0?'pass':'fail','Frame '+Math.round(r.width)+'×'+Math.round(r.height))}catch(e){set('6','Embedded document / 內嵌畫面','fail',err(e))}};document.getElementById('frame-slot').appendChild(f);
+ var code=location.hash.slice(1);if(/^[A-Za-z0-9]{12}$/.test(code)){
+  var link=document.getElementById('open');link.href='https://octopus.app.sb.wonderful.ai/s/'+code;link.hidden=false;
+  set('7','Share-link API / 分享連結服務','wait','Checking / 檢查中');
+  if(window.fetch){var finished=false;var timer=setTimeout(function(){if(!finished){finished=true;set('7','Share-link API / 分享連結服務','wait','No readable response within 10s; not proof of a network fault / 10秒內無可讀回應，不能據此判定網絡問題')}},10000);
+   fetch('https://octopus.api.sb.wonderful.ai/api/v1/apps/share-links/'+code+'/resolve',{credentials:'omit',referrerPolicy:'no-referrer'}).then(function(r){if(!finished){finished=true;clearTimeout(timer);set('7','Share-link API / 分享連結服務',r.ok?'pass':'fail','HTTP '+r.status+' (cross-origin check / 跨網站檢查)')}}).catch(function(){if(!finished){finished=true;clearTimeout(timer);set('7','Share-link API / 分享連結服務','wait','Response unreadable; browser cross-origin rules may block this test / 可能受跨網站存取限制，並非網絡故障證據')}});
+  }else set('7','Share-link API / 分享連結服務','wait','Fetch unavailable');
+ }else set('7','Share-link API / 分享連結服務','wait','Not selected / 未指定');
+ var ua=navigator.userAgent;document.getElementById('ua').textContent=ua;
+ setTimeout(function(){document.getElementById('status').textContent='Finished — please screenshot / 完成，請截圖';},12000);
+ var c=document.getElementById('copy');c.hidden=false;c.onclick=function(){var text='Browser Check ER-20260919-1\n'+ua+'\n'+JSON.stringify(results,null,2);if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(function(){document.getElementById('copy-status').textContent='Copied / 已複製'},function(){document.getElementById('copy-status').textContent='Please screenshot / 請截圖'});else document.getElementById('copy-status').textContent='Please screenshot / 請截圖'};
+})();
+</script></body></html>
